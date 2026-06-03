@@ -10,7 +10,7 @@ class GoogleProvider implements ProviderInterface
     public function __construct(string $apiKey, string $model = '')
     {
         $this->apiKey = $apiKey;
-        $this->model  = $model ?: 'gemini-1.5-flash';
+        $this->model  = $model ?: 'gemini-2.0-flash';
     }
 
     public function getName(): string { return 'Gemini (Google)'; }
