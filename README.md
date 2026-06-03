@@ -60,9 +60,9 @@ All settings are in `config.php`:
 
 | Provider | Default model |
 |---|---|
-| `anthropic` | claude-sonnet-4-5 |
+| `anthropic` | claude-sonnet-4-6 |
 | `openai` | gpt-4o |
-| `google` | gemini-1.5-flash |
+| `google` | gemini-2.5-flash |
 | `perplexity` | llama-3.1-sonar-large-128k-online |
 | `grok` | grok-beta |
 | `ownai` | configurable via `ai_model` |
