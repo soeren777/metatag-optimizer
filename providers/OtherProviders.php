@@ -5,7 +5,7 @@ require_once __DIR__ . '/BaseHttpProvider.php';
 // ── Perplexity ────────────────────────────────────────────────────────────────
 class PerplexityProvider extends BaseHttpProvider
 {
-    protected function defaultModel(): string { return 'llama-3.1-sonar-large-128k-online'; }
+    protected function defaultModel(): string { return 'sonar'; }
     public function getName(): string { return 'Perplexity'; }
 
     protected function buildRequest(string $prompt): array
@@ -32,7 +32,7 @@ class PerplexityProvider extends BaseHttpProvider
 // ── xAI Grok ─────────────────────────────────────────────────────────────────
 class GrokProvider extends BaseHttpProvider
 {
-    protected function defaultModel(): string { return 'grok-beta'; }
+    protected function defaultModel(): string { return 'grok-4.3'; }
     public function getName(): string { return 'Grok (xAI)'; }
 
     protected function buildRequest(string $prompt): array
