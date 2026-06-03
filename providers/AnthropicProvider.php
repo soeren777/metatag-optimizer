@@ -4,7 +4,7 @@ require_once __DIR__ . '/BaseHttpProvider.php';
 
 class AnthropicProvider extends BaseHttpProvider
 {
-    protected function defaultModel(): string { return 'claude-sonnet-4-5'; }
+    protected function defaultModel(): string { return 'claude-sonnet-4-6'; }
     public function getName(): string { return 'Claude (Anthropic)'; }
 
     protected function buildRequest(string $prompt): array
