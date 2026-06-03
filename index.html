@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meta Tag Optimizer – soerenmeier.de</title>
+  <meta name="description" content="Crawl a URL or enter content manually – generates optimized title, description, Open Graph, JSON-LD and llms.txt for search engines and AI systems." />
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/design-system.css" />
+  <link rel="stylesheet" href="/css/tools-styles.css" />
+  <link rel="stylesheet" href="/css/webtools.css" />
+  <style>
+    /* ── Tool-specific overrides ── */
+    .url-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .url-row input[type="url"] {
+      flex: 1 1 0;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .url-row input[type="url"]:focus { border-color: var(--accent); }
+    .url-row input[type="url"]::placeholder { color: var(--muted); }
+
+    .overrides-panel {
+      display: none;
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+    .overrides-panel.show { display: block; }
+    .overrides-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .field-grid {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px 12px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+    .field-grid label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      padding-top: 10px;
+    }
+    .field-grid input,
+    .field-grid textarea,
+    .field-grid select {
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    .field-grid input:focus,
+    .field-grid textarea:focus,
+    .field-grid select:focus { border-color: var(--accent); }
+    .field-grid input::placeholder,
+    .field-grid textarea::placeholder { color: var(--muted); }
+    .char-counter {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-align: right;
+      margin-top: 2px;
+      color: var(--muted);
+    }
+    .char-counter.ok  { color: #4caf50; }
+    .char-counter.warn { color: #ff9800; }
+    .char-counter.bad  { color: #f44336; }
+    .generate-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 4px;
+    }
+    .provider-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .provider-tag.ai { color: var(--accent); }
+
+    /* Progress */
+    .progress-wrap {
+      display: none;
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+    .progress-wrap.show { display: block; }
+    .progress-bar-track {
+      width: 100%;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--gradient);
+      transition: width 0.4s;
+    }
+    .progress-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Results section */
+    .result-wrap {
+      display: none;
+      margin-top: 32px;
+    }
+    .result-wrap.show { display: block; }
+
+    /* Score row */
+    /* AI suggestions */
+    .ai-hints {
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 24px;
+    }
+    .ai-hints.show { display: block; }
+    .ai-hints-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .ai-hint-item {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    .ai-hint-item:last-child { border: none; }
+    .ai-hint-item::before { content: "→"; color: var(--accent); flex-shrink: 0; }
+
+    /* Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 16px;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color 0.2s;
+      box-shadow: none;
+      transform: none;
+    }
+    .tab-btn:hover { color: var(--text); background: none; transform: none; box-shadow: none; }
+    #crawlBtn, #manualBtn {
+      font-family:var(--font-mono) !important;font-size:13px !important;letter-spacing:0.06em !important;
+      padding:11px 26px !important;border-radius:var(--radius-md) !important;
+      cursor:pointer !important;transition:background 0.2s, color 0.2s, border-color 0.2s !important;
+      white-space:nowrap !important;box-shadow:none !important;transform:none !important;
+      opacity:1 !important;
+    }
+    #crawlBtn:not(.mode-btn--active), #manualBtn:not(.mode-btn--active) {
+      background:var(--accent-alt) !important;color:rgba(255,255,255,0.45) !important;
+      border:1px solid var(--border) !important;
+    }
+    #crawlBtn.mode-btn--active, #manualBtn.mode-btn--active {
+      background:var(--accent) !important;color:#fff !important;
+      border:1px solid var(--accent) !important;
+    }
+    #crawlBtn:hover, #manualBtn:hover {
+      transform:none !important;box-shadow:none !important;
+    }
+    #crawlBtn:disabled, #manualBtn:disabled {
+      opacity:1 !important;cursor:wait !important;
+    }
+    .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: #2575fc; box-shadow: none; transform: none; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Code output */
+    .out-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .out-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .out-copy {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      box-shadow: none;
+      transform: none;
+      letter-spacing: 0.04em;
+    }
+    .out-copy:hover { color: var(--text); border-color: var(--accent); background: var(--surface2); box-shadow: none; transform: none; }
+    .out-copy.copied { color: #4caf50; border-color: rgba(76,175,80,.4); }
+    .code-out {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .code-out .ht { color: #6a8abf; }
+    .code-out .ha { color: #4caf50; }
+    .code-out .hv { color: #ff9800; }
+    .char-hint {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: -14px;
+      margin-bottom: 20px;
+    }
+    .char-hint.ok  { color: #4caf50; }
+    .char-hint.warn { color: #ff9800; }
+    .char-hint.bad  { color: #f44336; }
+
+    /* Robots options */
+    .robots-opts { display: grid; gap: 8px; margin-bottom: 16px; }
+    .robots-opt {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .robots-opt:hover { border-color: var(--border-hover); }
+    .robots-opt.active { border-color: var(--accent); }
+    .robots-opt-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .robots-opt-val {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .llms-note {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .llms-note a { color: var(--accent); }
+
+    /* Error */
+    .tool-error {
+      background: var(--surface2);
+      border: 1px solid rgba(244,67,54,.3);
+      border-left: 3px solid #f44336;
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #f44336;
+      margin-top: 20px;
+      display: none;
+    }
+    .tool-error.show { display: block; }
+
+    @media (max-width: 860px) {
+      .url-row { flex-direction: column; }
+      .field-grid { grid-template-columns: 1fr; }
+      .field-grid label { padding-top: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div data-include="/header.html"></div>
+
+  <main class="tool-page">
+    <div class="tool-page-inner">
+
+     <div class="tool-page-header">
+  <a href="/" class="tool-back">← Home</a>
+  <h1 class="tool-page-title">Meta Tag Optimizer</h1>
+  <p class="tool-page-desc">Crawl a URL or enter content manually – title, description, OG, JSON-LD and llms.txt in seconds. <a href="https://soerenmeier.de/docs/metatag-optimizer/" target="_blank" style="color:var(--accent); text-decoration:none; white-space:nowrap;">How it works →</a></p>
+</div>
+
+      <section class="tool-section" id="metaTagOptimizer">
+
+        <!-- URL row -->
+        <div class="url-row">
+          <input type="url" id="urlInput" placeholder="https://example.com/page" autocomplete="off" />
+          <button id="crawlBtn" class="mode-btn mode-btn--active">Crawl URL</button>
+          <button id="manualBtn" class="mode-btn">Manual Input</button>
+        </div>
+        <p style="font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center">
+          Enter a URL to crawl automatically – or fill in content manually
+        </p>
+
+        <!-- Error -->
+        <div class="tool-error" id="toolError"></div>
+
+        <!-- Overrides panel -->
+        <div class="overrides-panel" id="overridesPanel">
+          <div class="overrides-label">Override fields / enter manually</div>
+          <div class="field-grid">
+            <label>Title / H1</label>
+            <div>
+              <input type="text" id="ovTitle" placeholder="Main headline of the page" maxlength="120" />
+              <div class="char-counter" id="cTitle"></div>
+            </div>
+            <label>Keywords</label>
+            <input type="text" id="ovKeywords" placeholder="keyword1, keyword2, keyword3" />
+            <label>Description</label>
+            <div>
+              <textarea id="ovDesc" rows="3" placeholder="Brief description of the page content…" maxlength="300"></textarea>
+              <div class="char-counter" id="cDesc"></div>
+            </div>
+            <label>Page type</label>
+            <select id="ovType">
+              <option value="website">Website / Homepage</option>
+              <option value="article">Article / Blog</option>
+              <option value="product">Product</option>
+              <option value="organization">Organization / Business</option>
+            </select>
+          </div>
+          <div class="generate-row">
+            <button id="generateBtn">Generate tags</button>
+            <span class="provider-tag" id="providerTag"></span>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-label" id="progressLabel">Crawling…</div>
+        </div>
+
+        <!-- Results -->
+        <div class="result-wrap" id="resultWrap">
+
+          <!-- AI hints -->
+          <div class="ai-hints" id="aiHints">
+            <div class="ai-hints-label">AI suggestions</div>
+            <div id="hintsList"></div>
+          </div>
+
+          <!-- Tab nav -->
+          <div class="tab-nav">
+            <button class="tab-btn active" data-tab="basic">Title &amp; Desc</button>
+            <button class="tab-btn" data-tab="og">Open Graph</button>
+            <button class="tab-btn" data-tab="twitter">Twitter Card</button>
+            <button class="tab-btn" data-tab="jsonld">JSON-LD</button>
+            <button class="tab-btn" data-tab="robots">Robots</button>
+            
+          </div>
+
+          <!-- Tab: basic -->
+          <div class="tab-panel active" id="tab-basic">
+            <div class="out-head">
+              <span class="out-label">Title tag</span>
+              <button class="out-copy" data-target="outTitle">copy</button>
+            </div>
+            <div class="code-out" id="outTitle"></div>
+            <div class="char-hint" id="hintTitle"></div>
+            <div class="out-head">
+              <span class="out-label">Keywords</span>
+              <button class="out-copy" data-target="outKeywords">copy</button>
+            </div>
+            <div class="code-out" id="outKeywords"></div>
+            <div class="out-head">
+              <span class="out-label">Meta description</span>
+              <button class="out-copy" data-target="outDesc">copy</button>
+            </div>
+            <div class="code-out" id="outDesc"></div>
+            <div class="char-hint" id="hintDesc"></div>
+          </div>
+
+          <!-- Tab: og -->
+          <div class="tab-panel" id="tab-og">
+            <div class="out-head">
+              <span class="out-label">Open Graph tags</span>
+              <button class="out-copy" data-target="outOg">copy</button>
+            </div>
+            <div class="code-out" id="outOg"></div>
+          </div>
+
+          <!-- Tab: twitter -->
+          <div class="tab-panel" id="tab-twitter">
+            <div class="out-head">
+              <span class="out-label">Twitter Card tags</span>
+              <button class="out-copy" data-target="outTwitter">copy</button>
+            </div>
+            <div class="code-out" id="outTwitter"></div>
+          </div>
+
+          <!-- Tab: jsonld -->
+          <div class="tab-panel" id="tab-jsonld">
+            <div class="out-head">
+              <span class="out-label">JSON-LD (Schema.org)</span>
+              <button class="out-copy" data-target="outJsonld">copy</button>
+            </div>
+            <div class="code-out" id="outJsonld"></div>
+          </div>
+
+          <!-- Tab: robots -->
+          <div class="tab-panel" id="tab-robots">
+            <div class="out-label" style="margin-bottom:12px">Robots meta tag – choose variant</div>
+            <div class="robots-opts" id="robotsOpts"></div>
+            <div class="out-head" style="margin-top:4px">
+              <span class="out-label">Selected tag</span>
+              <button class="out-copy" data-target="outRobots">copy</button>
+            </div>
+            <div class="code-out" id="outRobots"></div>
+          </div>
+
+          <!-- Tab: llms -->
+          <div style="margin-top:16px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:12px;color:var(--muted)">
+            Need an <strong style="color:var(--text)">llms.txt</strong>? <a href="/tools/llms-txt-generator/" style="color:var(--accent)">Use the llms.txt Generator →</a>
+          </div></div><!-- /result-wrap -->
+      </section>
+
+    </div>
+  </main>
+
+  <div data-include="/footer.html"></div>
+
+  <script src="/js/include-html.js"></script>
+  <script src="/js/header-init.js"></script>
+  <script src="/js/scrollbtn.js"></script>
+  <script src="/js/overlay-standalone.js"></script>
+  <script>
+  const API = 'api.php';
+  let pageData = null;
+
+  function esc(s){ const d=document.createElement('div');d.textContent=String(s);return d.innerHTML; }
+  function mkMeta(attrs){
+    return `<span class="ht">&lt;meta</span>${Object.entries(attrs).filter(([,v])=>v).map(([k,v])=>`<span class="ha"> ${esc(k)}</span>=<span class="hv">"${esc(v)}"</span>`).join('')}<span class="ht"> /&gt;</span>`;
+  }
+  function mkTag(n,c){
+    return `<span class="ht">&lt;${n}&gt;</span>${esc(c)}<span class="ht">&lt;/${n}&gt;</span>`;
+  }
+  function charState(len,min,max){
+    return len>=min&&len<=max?'ok':len<min*0.7?'bad':'warn';
+  }
+  function charLabel(len,min,max){
+    const s=charState(len,min,max);
+    return `<span class="${s}">${len} / ${min}–${max} chars</span>`;
+  }
+
+  function setProgress(show,text,pct){
+    const w=document.getElementById('progressWrap');
+    w.className='progress-wrap'+(show?' show':'');
+    if(text) document.getElementById('progressLabel').textContent=text;
+    if(pct!=null) document.getElementById('progressFill').style.width=pct+'%';
+  }
+  function setError(msg){
+    const el=document.getElementById('toolError');
+    el.textContent=msg||'';
+    el.className='tool-error'+(msg?' show':'');
+  }
+
+  document.getElementById('crawlBtn').onclick=async()=>{
+    const url=document.getElementById('urlInput').value.trim();
+    if(!url){setError('Please enter a URL.');return;}
+    setError('');
+    document.getElementById('resultWrap').className='result-wrap';
+    setProgress(true,'Crawling page…',20);
+    document.getElementById('crawlBtn').classList.add('mode-btn--active');
+    document.getElementById('manualBtn').classList.remove('mode-btn--active');
+    document.getElementById('crawlBtn').disabled=true;
+    try{
+      const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'crawl',url})});
+      const d=await r.json();
+      if(!d.ok) throw new Error(d.error);
+      pageData=d.data.page;
+      fillOverrides(pageData);
+      document.getElementById('overridesPanel').classList.add('show');
+      const pt=document.getElementById('providerTag');
+      pt.textContent=d.data.ai_ready?'✦ '+d.data.provider:'rule-based';
+      pt.className='provider-tag'+(d.data.ai_ready?' ai':'');
+      setProgress(true,'Generating tags…',60);
+      await doGenerate();
+    }catch(e){
+      setError(e.message);
+    }finally{
+      setProgress(false);
+      document.getElementById('crawlBtn').disabled=false;
+    }
+  };
+
+  document.getElementById('manualBtn').onclick=()=>{
+    document.getElementById('manualBtn').classList.add('mode-btn--active');
+    document.getElementById('crawlBtn').classList.remove('mode-btn--active');
+    const url=document.getElementById('urlInput').value.trim()||'https://example.com';
+    const domain=(url.match(/https?:\/\/([^/]+)/)||[])[1]||'example.com';
+    pageData={url,existing:{},h1:'',h2s:[],paragraphs:[],jsonld:[],page_type:'website',body_text:'',domain};
+    document.getElementById('overridesPanel').classList.add('show');
+    document.getElementById('resultWrap').className='result-wrap';
+  };
+
+  document.getElementById('generateBtn').onclick=async()=>{
+    setError('');
+    document.getElementById('generateBtn').disabled=true;
+    setProgress(true,'Generating…',50);
+    try{ await doGenerate(); }
+    catch(e){ setError(e.message); }
+    finally{ setProgress(false); document.getElementById('generateBtn').disabled=false; }
+  };
+
+  async function doGenerate(){
+    if(!pageData) return;
+    const overrides={
+      title:document.getElementById('ovTitle').value.trim(),
+      keywords:document.getElementById('ovKeywords').value.trim(),
+      description:document.getElementById('ovDesc').value.trim(),
+    };
+    pageData.page_type=document.getElementById('ovType').value||'website';
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate',page:pageData,overrides})});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error);
+    renderResults(d.data);
+  }
+
+  function fillOverrides(p){
+    document.getElementById('ovTitle').value=p.h1||p.existing?.title||'';
+    document.getElementById('ovKeywords').value=p.existing?.keywords||'';
+    document.getElementById('ovDesc').value=p.existing?.description||'';
+    document.getElementById('ovType').value=p.page_type||'website';
+    updateCounters();
+  }
+
+  function updateCounters(){
+    const t=document.getElementById('ovTitle').value.length;
+    const d=document.getElementById('ovDesc').value.length;
+    const tc=document.getElementById('cTitle');
+    const dc=document.getElementById('cDesc');
+    tc.textContent=`${t} / 30–60`;tc.className='char-counter '+charState(t,30,60);
+    dc.textContent=`${d} / 120–160`;dc.className='char-counter '+charState(d,120,160);
+  }
+  document.getElementById('ovTitle').oninput=updateCounters;
+  document.getElementById('ovDesc').oninput=updateCounters;
+
+  function renderResults(d){
+    document.getElementById('resultWrap').className='result-wrap show';
+    // AI hints
+    if(d.ai_suggestions?.length){
+      document.getElementById('aiHints').classList.add('show');
+      document.getElementById('hintsList').innerHTML=d.ai_suggestions.map(s=>`<div class="ai-hint-item">${esc(s)}</div>`).join('');
+    }
+
+    // Title
+    document.getElementById('outTitle').innerHTML=mkTag('title',d.title);
+    const kw = d.keywords || document.getElementById('ovKeywords').value.trim() || '';
+    document.getElementById('outKeywords').innerHTML=mkMeta({name:'keywords',content:kw});
+    const tl=d.title.length;
+    const th=document.getElementById('hintTitle');
+    th.textContent=`${tl} / 30–60 chars`;th.className='char-hint '+charState(tl,30,60);
+
+    // Desc
+    document.getElementById('outDesc').innerHTML=mkMeta({name:'description',content:d.description});
+    const dl=d.description.length;
+    const dh=document.getElementById('hintDesc');
+    dh.textContent=`${dl} / 120–160 chars`;dh.className='char-hint '+charState(dl,120,160);
+
+    // OG
+    document.getElementById('outOg').innerHTML=Object.entries(d.og).filter(([,v])=>v).map(([k,v])=>mkMeta({property:k,content:v})).join('\n');
+
+    // Twitter
+    document.getElementById('outTwitter').innerHTML=Object.entries(d.twitter).map(([k,v])=>mkMeta({name:k,content:v})).join('\n');
+
+    // JSON-LD
+    document.getElementById('outJsonld').innerHTML=`<span class="ht">&lt;script</span><span class="ha"> type</span>=<span class="hv">"application/ld+json"</span><span class="ht">&gt;</span>\n${esc(JSON.stringify(d.jsonld,null,2))}\n<span class="ht">&lt;/script&gt;</span>`;
+
+    // Robots
+    const opts=[['Standard SEO','standard'],['AI crawlers open','ai_open'],['Block AI crawlers','ai_block']];
+    document.getElementById('robotsOpts').innerHTML=opts.map(([label,key],i)=>`
+      <div class="robots-opt${i===0?' active':''}" onclick="selectRobot(this,'${esc(d.robots[key])}')">
+        <div class="robots-opt-name">${label}</div>
+        <div class="robots-opt-val">${esc(d.robots[key])}</div>
+      </div>`).join('');
+    document.getElementById('outRobots').innerHTML=mkMeta({name:'robots',content:d.robots.standard});
+
+    // llms.txt
+
+
+    document.getElementById('resultWrap').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function selectRobot(el,val){
+    document.querySelectorAll('.robots-opt').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('outRobots').innerHTML=mkMeta({name:'robots',content:val});
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    };
+  });
+
+  // Copy buttons
+  document.querySelectorAll('.out-copy').forEach(btn=>{
+    btn.onclick=()=>{
+      const el=document.getElementById(btn.dataset.target);
+      navigator.clipboard.writeText(el.innerText).then(()=>{
+        const orig=btn.textContent;
+        btn.textContent='copied ✓';btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent=orig;btn.classList.remove('copied');},2000);
+      });
+    };
+  });
+  </script>
+
+</body>
+</html>

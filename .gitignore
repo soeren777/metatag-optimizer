@@ -1,0 +1,20 @@
+# Dependencies
+vendor/
+
+# Config with API keys
+config.php
+
+# Rate limit files
+tmp/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
