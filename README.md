@@ -2,7 +2,7 @@
 
 A PHP-based tool that crawls any URL server-side, extracts the full page content and generates optimized meta tags – either rule-based (no API key required) or powered by your choice of AI provider.
 
-**Live demo:** [ai-ready-check.de](https://ai-ready-check.de) · [soerenmeier.de/webtools/metatag-optimizer/](https://soerenmeier.de/webtools/metatag-optimizer/)  
+**Live demo:** [ai-ready-check.de](https://ai-ready-check.de/en/tools/metatag-optimizer/) · [soerenmeier.de/webtools/metatag-optimizer/](https://soerenmeier.de/webtools/metatag-optimizer/)  
 **Documentation:** [soerenmeier.de/docs/metatag-optimizer/](https://soerenmeier.de/docs/metatag-optimizer/)
 
 ---
